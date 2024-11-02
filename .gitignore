@@ -1,0 +1,45 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+
+# Database files
+*.sqlite
+*.sqlite3
+
+# IDE settings (VSCode, JetBrains, etc.)
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Optional npm cache
+.npm/
+
+# Build files
+dist/
+build/
+
+# MongoDB dump files
+dump/
+
+# Coverage directory used by testing frameworks
+coverage/
+
+# Temporary files
+tmp/
+temp/
+
+uploads
