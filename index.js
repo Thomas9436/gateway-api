@@ -6,9 +6,10 @@ const app = express();
 require('dotenv').config();
 const connectDB = require('./database/db');
 const routes = require('./routes/index');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 connectDB();
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
@@ -35,10 +36,37 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
+// Redirection vers users api
+app.use(
+    '/users',
+    createProxyMiddleware({
+        target: 'http://users-api:4000',  // Docker utilise le nom 'users-api'
+        changeOrigin: true
+    })
+);
+
+// Redirection vers book-management
+app.use(
+    '/books/manage',
+    createProxyMiddleware({
+        target: 'http://books-management-api:5000',
+        changeOrigin: true
+    })
+);
+
+// Redirection vers book-borrow-api
+app.use(
+    '/books/borrow',
+    createProxyMiddleware({
+        target: 'http://books-borrowing-api:6000',
+        changeOrigin: true
+    })
+);
+
 app.get('/', (req, res) => {
     res.send('Bienvenue sur mon API!');
 });
 
 app.listen(port, () => {
-    console.log(`Serveur en écoute sur http://localhost:${port}`);
+    console.log(`Gateway is listening on http://localhost:${port}`);
 });
