@@ -7,6 +7,7 @@ require('dotenv').config();
 const connectDB = require('./database/db');
 const routes = require('./routes/index');
 const { createProxyMiddleware } = require('http-proxy-middleware');
+const authMiddleware = require('./middleware/authMiddleware');
 
 connectDB();
 const port = process.env.PORT || 3000;
@@ -21,8 +22,6 @@ app.use(
     })
 );
 
-app.use('/api/', routes);
-
 const swaggerOptions = {
     swaggerDefinition: {
         openapi: '3.0.0',
@@ -33,14 +32,24 @@ const swaggerOptions = {
     },
     apis: ['./routes/**/*.js', './model/**/*.js', './swagger.js'] // Inclure les fichiers routes et swagger.js
 };
+
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
+
+app.use(routes);
 
 // Redirection vers users api
 app.use(
     '/users',
+    (req, res, next) => {
+        if (req.path === '/register') {
+            return next(); // Ne pas appliquer le middleware d'authentification pour /register
+        } else {
+            return authMiddleware(req, res, next);
+        }
+    },
     createProxyMiddleware({
-        target: 'http://users-api:4000',  // Docker utilise le nom 'users-api'
+        target: 'http://users-api:4000', // Docker utilise le nom 'users-api'
         changeOrigin: true
     })
 );
@@ -48,6 +57,7 @@ app.use(
 // Redirection vers book-management
 app.use(
     '/books/manage',
+    authMiddleware,
     createProxyMiddleware({
         target: 'http://books-management-api:5000',
         changeOrigin: true
@@ -57,6 +67,7 @@ app.use(
 // Redirection vers book-borrow-api
 app.use(
     '/books/borrow',
+    authMiddleware,
     createProxyMiddleware({
         target: 'http://books-borrowing-api:6000',
         changeOrigin: true
