@@ -5,14 +5,23 @@ const swaggerUI = require('swagger-ui-express');
 const app = express();
 require('dotenv').config();
 const connectDB = require('./database/db');
-const routes = require('./routes/index');
+const authRoutes = require('./routes/authRoutes');
+const { consumeAuthResponses } = require('./services/consumers/authConsumer');
+const authService = require('./services/authService');
 const { createProxyMiddleware } = require('http-proxy-middleware');
-const authMiddleware = require('./middleware/authMiddleware');
 
 connectDB();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
+
+app.use(authRoutes);
+
+// Lance le consommateur pour les réponses RabbitMQ
+consumeAuthResponses(authService.handleAuthResponse).catch((error) =>
+    console.error('Erreur RabbitMQ:', error)
+  );
+  
 
 app.use(
     cors({
@@ -36,28 +45,32 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
-app.use(routes);
 
-// Redirection vers users api
+// Redirection vers l'API Users
 app.use(
     '/users',
-    (req, res, next) => {
-        if (req.path === '/register') {
-            return next(); // Ne pas appliquer le middleware d'authentification pour /register
-        } else {
-            return authMiddleware(req, res, next);
-        }
-    },
     createProxyMiddleware({
-        target: 'http://users-api:4000', // Docker utilise le nom 'users-api'
-        changeOrigin: true
+      target: 'http://localhost:4000', // 'http://users-api:4000' Docker
+      changeOrigin: true,
+      onProxyReq: (proxyReq, req) => {
+        // Transmettre le body pour les requêtes POST
+        if (req.body && Object.keys(req.body).length) {
+          const bodyData = JSON.stringify(req.body);
+          proxyReq.setHeader('Content-Type', 'application/json');
+          proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+          proxyReq.write(bodyData);
+        }
+      },
+      onError: (err, req, res) => {
+        console.error('Proxy error:', err.message);
+        res.status(502).json({ message: 'Erreur de communication avec Users API.' });
+      },
     })
-);
+  );
 
 // Redirection vers book-management
 app.use(
     '/books/manage',
-    authMiddleware,
     createProxyMiddleware({
         target: 'http://books-management-api:5000',
         changeOrigin: true
@@ -67,7 +80,6 @@ app.use(
 // Redirection vers book-borrow-api
 app.use(
     '/books/borrow',
-    authMiddleware,
     createProxyMiddleware({
         target: 'http://books-borrowing-api:6000',
         changeOrigin: true

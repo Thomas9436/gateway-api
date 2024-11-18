@@ -1,5 +1,5 @@
 const express = require('express');
-const authService = require('../service/authService');
+const authController = require('../controller/authController');
 const router = express.Router();
 
 /**
@@ -24,7 +24,7 @@ const router = express.Router();
  *       400:
  *         description: Erreur dans les données fournies
  */
-router.post('/register', authService.register);
+router.post('/register', authController.register);
 
 /**
  * @swagger
@@ -64,6 +64,6 @@ router.post('/register', authService.register);
  *       401:
  *         description: Email ou mot de passe incorrect
  */
-router.post('/login', authService.login);
+router.post('/login', authController.login);
 
 module.exports = router;
