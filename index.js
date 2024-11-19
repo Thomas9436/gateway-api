@@ -8,12 +8,21 @@ const connectDB = require('./database/db');
 const authRoutes = require('./routes/authRoutes');
 const { consumeAuthResponses } = require('./services/consumers/authConsumer');
 const authService = require('./services/authService');
-const { createProxyMiddleware } = require('http-proxy-middleware');
+const { fixRequestBody, createProxyMiddleware } = require('http-proxy-middleware');
 
 connectDB();
 const port = process.env.PORT || 3000;
 
-app.use(express.json());
+// Middleware JSON conditionnel pour routes natives uniquement
+const isNativeRoute = (req) => ['/register', '/login'].includes(req.path);
+
+app.use((req, res, next) => {
+  if (isNativeRoute(req)) {
+    express.json()(req, res, next); // Appliquer express.json() uniquement aux routes natives car createProxyMiddleware doit consommer une requête brute (raw) et non req.body
+  } else {
+    next(); // Ignorer pour les proxys
+  }
+});
 
 app.use(authRoutes);
 
@@ -52,15 +61,7 @@ app.use(
     createProxyMiddleware({
       target: 'http://localhost:4000', // 'http://users-api:4000' Docker
       changeOrigin: true,
-      onProxyReq: (proxyReq, req) => {
-        // Transmettre le body pour les requêtes POST
-        if (req.body && Object.keys(req.body).length) {
-          const bodyData = JSON.stringify(req.body);
-          proxyReq.setHeader('Content-Type', 'application/json');
-          proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-          proxyReq.write(bodyData);
-        }
-      },
+      onProxyReq: fixRequestBody, // Réécrit le corps de la requête avant de la transmettre
       onError: (err, req, res) => {
         console.error('Proxy error:', err.message);
         res.status(502).json({ message: 'Erreur de communication avec Users API.' });
@@ -68,13 +69,20 @@ app.use(
     })
   );
 
-// Redirection vers book-management
 app.use(
-    '/books/manage',
-    createProxyMiddleware({
-        target: 'http://books-management-api:5000',
-        changeOrigin: true
-    })
+  '/books/manage',
+  createProxyMiddleware({
+    target: 'http://localhost:5000', // Cible : API book-management
+    changeOrigin: true,
+    onProxyReq: fixRequestBody, // Réécrit le corps de la requête avant de la transmettre
+    onError: (err, req, res) => {
+      console.error('Erreur de proxy :', err.message);
+      res.status(502).json({
+        message: 'Erreur de communication avec book-management.',
+        error: err.message,
+      });
+    },
+  })
 );
 
 // Redirection vers book-borrow-api

@@ -37,15 +37,4 @@ async function consumeAuthResponses() {
   });
 }
 
-function awaitResponse(correlationId) {
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      pendingResponses.delete(correlationId);
-      reject(new Error(`Timeout waiting for response with correlationId: ${correlationId}`));
-    }, 5000); // Timeout de 5 secondes
-
-    pendingResponses.set(correlationId, { resolve, timeout });
-  });
-}
-
-module.exports = { consumeAuthResponses, awaitResponse };
+module.exports = { consumeAuthResponses };

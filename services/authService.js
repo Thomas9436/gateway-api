@@ -4,6 +4,7 @@ const { publishAuthEvent } = require('./producers/authProducer');
 const { awaitResponse } = require('./consumers/authConsumer');
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const pendingResponses = new Map();
 
 async function registerUser({ firstName, lastName, email, password }) {
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -45,4 +46,16 @@ async function loginUser({ email, password }) {
   }
 }
 
-module.exports = { registerUser, loginUser };
+// Fonction utilitaire pour générer un ID unique
+function awaitResponse(correlationId) {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      pendingResponses.delete(correlationId);
+      reject(new Error(`Timeout waiting for response with correlationId: ${correlationId}`));
+    }, 5000); // Timeout de 5 secondes
+
+    pendingResponses.set(correlationId, { resolve, timeout });
+  });
+}
+
+module.exports = { registerUser, loginUser, awaitResponse };
