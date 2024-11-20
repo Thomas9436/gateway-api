@@ -1,7 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { publishAuthEvent } = require('./producers/authProducer');
-const { awaitResponse } = require('./consumers/authConsumer');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const pendingResponses = new Map();

@@ -59,7 +59,7 @@ app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 app.use(
     '/users',
     createProxyMiddleware({
-      target: 'http://localhost:4000', // 'http://users-api:4000' Docker
+      target: 'http://users-api:4000', // 'http://localhost:4000'
       changeOrigin: true,
       onProxyReq: fixRequestBody, // Réécrit le corps de la requête avant de la transmettre
       onError: (err, req, res) => {
@@ -72,7 +72,7 @@ app.use(
 app.use(
   '/books/manage',
   createProxyMiddleware({
-    target: 'http://localhost:5000', // Cible : API book-management
+    target: 'http://books-management-api:5000', // 'http://localhost:5000'
     changeOrigin: true,
     onProxyReq: fixRequestBody, // Réécrit le corps de la requête avant de la transmettre
     onError: (err, req, res) => {
@@ -89,8 +89,16 @@ app.use(
 app.use(
     '/books/borrow',
     createProxyMiddleware({
-        target: 'http://books-borrowing-api:6000',
-        changeOrigin: true
+        target: 'http://books-borrowing-api:6000', // 'http://localhost:6000'
+        changeOrigin: true,
+        onProxyReq: fixRequestBody, // Réécrit le corps de la requête avant de la transmettre
+        onError: (err, req, res) => {
+          console.error('Erreur de proxy :', err.message);
+          res.status(502).json({
+            message: 'Erreur de communication avec book-management.',
+            error: err.message,
+          });
+    },
     })
 );
 
