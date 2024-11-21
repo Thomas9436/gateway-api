@@ -175,50 +175,52 @@ npm start
 ```javascript
 // Redirection vers l'API Users
 app.use(
-'/users',
-createProxyMiddleware({
-target: 'http://localhost:4000, // en local
-changeOrigin: true,
-onProxyReq: fixRequestBody, // Réécrit le corps de la requête avant de la transmettre
-onError: (err, req, res) => {
-console.error('Proxy error:', err.message);
-res.status(502).json({ message: 'Erreur de communication avec Users API.' });
-},
-})
+  '/users',
+  createProxyMiddleware({
+    target: 'http://localhost:4000', // En local
+    changeOrigin: true,
+    onProxyReq: fixRequestBody, // Réécrit le corps de la requête avant de la transmettre
+    onError: (err, req, res) => {
+      console.error('Proxy error:', err.message);
+      res.status(502).json({ message: 'Erreur de communication avec Users API.' });
+    },
+  })
 );
 
+// Redirection vers l'API Books Management
 app.use(
-'/books/manage',
-createProxyMiddleware({
-target: 'http://localhost:5000', // En local
-changeOrigin: true,
-onProxyReq: fixRequestBody,
-onError: (err, req, res) => {
-console.error('Erreur de proxy :', err.message);
-res.status(502).json({
-message: 'Erreur de communication avec book-management.',
-error: err.message,
-});
-},
-})
+  '/books/manage',
+  createProxyMiddleware({
+    target: 'http://localhost:5000', // En local
+    changeOrigin: true,
+    onProxyReq: fixRequestBody,
+    onError: (err, req, res) => {
+      console.error('Erreur de proxy :', err.message);
+      res.status(502).json({
+        message: 'Erreur de communication avec book-management.',
+        error: err.message,
+      });
+    },
+  })
 );
 
-// Redirection vers book-borrow-api
+// Redirection vers l'API Book Borrowing
 app.use(
-'/books/borrow',
-createProxyMiddleware({
-target: 'http://localhost:6000', // En local
-changeOrigin: true,
-onProxyReq: fixRequestBody,
-onError: (err, req, res) => {
-console.error('Erreur de proxy :', err.message);
-res.status(502).json({
-message: 'Erreur de communication avec book-management.',
-error: err.message,
-});
-},
-})
+  '/books/borrow',
+  createProxyMiddleware({
+    target: 'http://localhost:6000', // En local
+    changeOrigin: true,
+    onProxyReq: fixRequestBody,
+    onError: (err, req, res) => {
+      console.error('Erreur de proxy :', err.message);
+      res.status(502).json({
+        message: 'Erreur de communication avec book-borrow.',
+        error: err.message,
+      });
+    },
+  })
 );
+
 ```
 # Endpoint en local
 
