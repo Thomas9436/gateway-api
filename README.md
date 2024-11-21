@@ -17,6 +17,8 @@ Par défaut le projet est fait pour être lancé avec docker de préférence.
 Variables d'environnement
 Le fichier .env n'est pas inclus dans ce dépôt. Vous devez créer un fichier .env à la racine du projet avec les variables suivantes :
 
+
+```plaintext
 Port de l'application
 PORT=3000 //Port de la Gateway
 
@@ -28,7 +30,7 @@ RABBITMQ_URL=amqp://user:password@localhost:5672
 
 Clé secrète JWT pour l'authentification
 JWT_SECRET=a34c8587b350067c8b8a67671ced1368c51866a44b68bf382e0d07194eff82b128760749277253ca8e687bd1dc00052230d0906d8e645fe5a199fe39340d2090b352eeb6213fddcf3199fae3ae38cba5abe6546f787a8d95dbb726dbb693292d43efa9d7981608076c74a38d3ae32a88db54cad739fb28f084b027326fff07aae460f49393d69c41a6d51e1d9098650ccbb326d8a6ef44ca538670fc9973b3945ef7dec9d01116ee0887ff500c41ada382782eff5bc817eb6282ae718d679d5f9246c51c324de5a84330495aa6391401b6dac9c54cea907b1e778a3871f647b8fdab01c517ce3292286034bb5b22197602a3c4d4f915e295c5cc6c07ff111374
-
+```
 # Lancer l'application avec Docker :
 
 Créer un fichier docker-compose.yml dans un dossier parent du dossier clone :
