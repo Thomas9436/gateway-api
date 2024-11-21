@@ -1,60 +1,51 @@
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { publishAuthEvent } = require('./producers/authProducer');
+const { awaitResponse } = require('../services/consumers/authConsumer');
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const pendingResponses = new Map();
 
 async function registerUser({ firstName, lastName, email, password }) {
-  const hashedPassword = await bcrypt.hash(password, 10);
+    const correlationId = Date.now().toString(); // Génère un correlationId unique
+    console.log(`Initialisation du correlationId: ${correlationId}`);
 
-  // Publier un événement d'inscription avec un correlationId
-  const correlationId = await publishAuthEvent('register', {
-    firstName,
-    lastName,
-    email,
-    password: hashedPassword
-  });
+    // Publier l'événement d'inscription avec le correlationId
+    await publishAuthEvent('register', {
+        correlationId,
+        firstName,
+        lastName,
+        email,
+        password
+    });
 
-  // Attendre une réponse associée au correlationId
-  const response = await awaitResponse(correlationId);
+    // Attendre la réponse associée au correlationId
+    const response = await awaitResponse(correlationId);
 
-  return response;
+    // Retourner la réponse pour traitement dans le contrôleur
+    return response;
 }
 
 async function loginUser({ email, password }) {
-  // Publier un événement de connexion avec un correlationId
-  const correlationId = await publishAuthEvent('login', { email, password });
+    const correlationId = Date.now().toString(); // Génère un correlationId unique
+    console.log(`Initialisation du correlationId pour login: ${correlationId}`);
 
-  try {
+    // Publier un événement de connexion avec un correlationId
+    await publishAuthEvent('login', { correlationId, email, password });
+    console.log('Mot de passe envoyé pour login:', password);
+
     // Attendre une réponse associée au correlationId
     const response = await awaitResponse(correlationId);
+    console.log('Réponse reçue pour login:', response);
 
     if (response.status === 'success') {
-      // Générer un token JWT
-      const token = jwt.sign({ userId: response.userId }, JWT_SECRET, {
-        expiresIn: process.env.TIMEOUT_TOKEN || '5h',
-      });
-      return { token };
+        // Générer un token JWT
+        const token = jwt.sign({ userId: response.user.id, email: response.user.email }, JWT_SECRET, {
+            expiresIn: process.env.TIMEOUT_TOKEN || '5h'
+        });
+
+        return { token };
     } else {
-      throw new Error(response.message); // Utilise le message de l'API Users
+        throw new Error(response.message);
     }
-  } catch (error) {
-    console.error('Erreur dans loginUser:', error);
-    throw new Error('Utilisateur ou mot de passe incorrect.');
-  }
 }
 
-// Fonction utilitaire pour générer un ID unique
-function awaitResponse(correlationId) {
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      pendingResponses.delete(correlationId);
-      reject(new Error(`Timeout waiting for response with correlationId: ${correlationId}`));
-    }, 5000); // Timeout de 5 secondes
-
-    pendingResponses.set(correlationId, { resolve, timeout });
-  });
-}
-
-module.exports = { registerUser, loginUser, awaitResponse };
+module.exports = { registerUser, loginUser };
