@@ -80,10 +80,6 @@ services:
     container_name: users-api
     depends_on:
       - rabbitmq
-    labels:
-      - "traefik.http.routers.users.rule=PathPrefix(`/users`)" # Route pour Users API
-      - "traefik.http.services.users.loadbalancer.server.port=4000"
-      - "traefik.http.routers.users.entrypoints=web"
     networks:
       - app-network
 
@@ -93,10 +89,6 @@ services:
     container_name: books-management-api
     depends_on:
       - rabbitmq
-    labels:
-      - "traefik.http.routers.books-management.rule=PathPrefix(`/books/manage`)" # Route pour Books Management
-      - "traefik.http.services.books-management.loadbalancer.server.port=5000"
-      - "traefik.http.routers.books-management.entrypoints=web"
     networks:
       - app-network
 
@@ -106,10 +98,6 @@ services:
     container_name: books-borrowing-api
     depends_on:
       - rabbitmq
-    labels:
-      - "traefik.http.routers.books-borrowing.rule=PathPrefix(`/books/borrow`)" # Route pour Books Borrowing
-      - "traefik.http.services.books-borrowing.loadbalancer.server.port=6000"
-      - "traefik.http.routers.books-borrowing.entrypoints=web"
     networks:
       - app-network
 
